@@ -1,0 +1,10 @@
+a { text-decoration: none; color: #26b5d6; }
+body { margin: 0; font-family: 'Roboto', sans-serif; }
+h1, h2, h3, h4 { color: #888; }
+header, section, footer { padding: 15px; }
+header { background-color: #26b5d6; font-size: 1.5em; color: #fff; }
+header a { color: #fff; }
+footer { border-top: 1px solid #aaa; color: #888; text-align: center; }
+.container { max-width: 900px; margin: 0 auto; }
+.inline { list-style: none; margin: 0; padding: 0; }
+.inline > li { display: inline; margin: 0 5px; }

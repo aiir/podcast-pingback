@@ -1,0 +1,384 @@
+# Podcast Pingback Version 1
+
+## Abstract
+
+Podcast Pingback is a method for a podcast publisher to request notification
+when somebody interacts with their content. Typically, podcast playback software
+will automatically inform the relevant parties on behalf of the listener.
+
+For example, Alice publishes a new episode of her podcast. Bob then subscribes
+and listens to that episode. Using Podcast Pingback, Bob's podcast software can
+automatically notify Alice that her episode has been listened to and Alice's
+receiving software can process that information to provide statistics on the
+listeners to her Podcast.
+
+## Introduction
+
+Statistics on a podcast, showing how many people listened, where, when and for
+how long provide useful insights to publishers editorially. In addition, many
+publishers require the inclusion of advertising in their audio to financially
+support their work. In turn these advertisers expect accountability for their
+spending, to be able to see how many people their advertising has reached.
+
+Historically podcasts have had some issue in providing accurate consumption
+statistics due to the nature of the technology. Whilst the act of pulling an
+episode from a server can be tracked, it does not tell the full picture of how
+that episode might be confused. It may be being pulled from the server by way
+of streaming, in which case audio playback is happening in "real time". It may
+be downloaded to a client but played in hours, days or weeks time. It may never
+be played. As a result, download statistics give an inaccurate picture.
+
+Some proprietary listening platforms have implemented their own analytics
+methods. These by their nature only track events within their own listening
+environment - typically in one specific client - which is unlikely to make up
+the entire listenership of their podcast.
+
+This specification details a simple, open method where a podcast client can make
+a request to a server advertised in the podcast's feed, notifying the publisher
+of a listener's actions in relation to the publisher's audio.
+
+## Goals
+
+The method is designed to be simple and lightweight as possible to understand
+and implement, in the hope that it will get adopted as widely as possible. It
+is implemented via HTTPS to ensure easy implementation in any environment.
+
+The inclusion and management of identifiable information should always be in the
+listeners control, even post submission.
+
+Subscription status is not tracked as an event in Version 1 due to lack of
+usefulness this metric offers when compared to actual listening activity.
+
+## Discovery
+
+A podcast client discovers the availability of this method for a podcast and the
+location of the server to send notifications to from the podcast RSS XML feed.
+
+A `<pingback>` element is added either to the `<channel>` and/or `<item>`
+elements.
+
+```
+<channel>
+  <pingback>pingback-server</pingback>
+</channel>
+```
+
+```
+<item>
+  <pingback>pingback-server</pingback>
+</item>
+```
+
+A client must evaluate pingback addresses in the order of item being played
+first, then channel. If an item has a pingback address it must be used
+regardless of a channel pingback address being present. If no item pingback
+address is present, but a channel address is present, the channel one must be
+used. If neither are present, the ability to pingback is not offered for this
+podcast.
+
+The address must be an HTTPS endpoint.
+
+Here's a simple example:
+
+```
+<rss version=”2.0">
+  <channel>
+    <title>Podcast</title>
+    <pingback>https://alice.example.net/pingback</pingback>
+    <item>
+      <title>Episode 2</title>
+      <guid>https://alice.example.net/episode-2.mp3</guid>
+      <pubDate>Tue, 1 May 2018 12:00:00 BST</pubDate>
+      <enclosure length=”1037273" url=”https://alice.example.net/episode-2.mp3" type=”audio/mpeg”/>
+      <pingback>https://alice.example.net/episode-specific-pingback</pingback>
+    </item>
+    <item>
+      <title>Episode 1</title>
+      <guid>https://alice.example.net/podcasts/episode-1.mp3</guid>
+      <pubDate>Tue, 24 Apr 2018 12:00:00 BST</pubDate>
+      <enclosure length=”1037273" url=”https://alice.example.net/episode-1.mp3" type=”audio/mpeg”/>
+    </item>
+  </channel>
+</rss>
+```
+
+Events against Episode 2 of this podcast must be delivered to the episode
+specific pingback server address, whereas events for Episode 1 must go to the
+channel's parent pingback server address.
+
+## Notifying
+
+Events are sent to the relevant pingback server address for the item being
+interacted with (see [Discovery](#discovery)).
+
+All submissions are done via an HTTPS POST to the server address, with a
+JSON-encoded body object. The `Content-Type` header must be set to
+`application/json`.
+
+The body object consists of several properties, before the main `events` array.
+
+An array of one or more events can be sent at any time. They could be sent
+individually as they occur, or persisted locally until a later time and
+delivered together. The only limitation is that the `events` array must be no
+more than 100 events in length.
+
+The specification intentionally does not prevent an intermediary third party
+from submitting this data instead of directly from a client. For example, a
+podcast client may use its own server to receive data from their client in a
+proprietary transport and then present it to the content producer's server using
+this specification.
+
+### Top-level Properties
+
+* `uuid` (required, string) is a v4 UUID generated by the software submitting a
+  request to allow future requests to be linked to same software.
+* `content` (required, string) is the URL of the audio content the events relate
+  to.
+* `events` (required, array) see the following section.
+* `listener` (optional, object) provides further detail of the listener, subject
+  to the client obtaining suitable permission to provide these details.
+  * `date_of_birth` (optional, string) is the listeners date of birth in ISO8601
+    date format, e.g. November 21st 1984 would be 1984-11-21. A listener may
+    choose to omit both the date and month if they prefer, in which case values
+    should be replaced by the X character, e.g. to reveal the year only the
+    value would be '1984-XX-XX'.
+  * `gender` (optional, string) is the gender that the listener identifies as.
+    This is a freeform string to allow the listener to identify as they wish.
+  * `location` (optional, object) is the location the listener identifies with
+    (e.g. their home). This is an object with two properties `latitude` and
+    `longitude`. The number of decimal places will infer the accuracy of the
+    location point and a listener must be able to vary the accuracy based on the
+    detail of these values.
+  * `current_location` (optional, object) differs from `location` as it is the
+    location the listener was at the time the events being reported occurred, if
+    available. The format and comments regarding accuracy are same as
+    `location`.
+* `listener_token` (optional, string) after successful submission of listener
+  demographic data, a token is returned to avoid having to resubmit it in the
+  future. If the token is sent in conjunction with a `listener` object, the data
+  held for that listener (and associated with any previously submitted events)
+  must be updated to that in the `listener` object. If that object is empty, the
+  server must remove the identity from any previously stored events. Please
+  note the difference between an empty object (e.g. `{}`) and the object being
+  entirely missing (e.g. no `listener` property on the parent JSON body object).
+
+### Events
+
+`events` is an array of objects, and is required. There are various event types
+that can be reported. An object inside this array has the following properties
+for all event types:
+
+* `event` (required, string) is the type of event this object represents and the
+  value must be either `resume` or `suspend`.
+* `date` (required, string) is an ISO8601 date time
+  (e.g. `2018-01-01T00:00:00Z`) which represents when the event occurred.
+* `offset` (required, number) is the number of seconds in to the podcast the
+  player is when reporting this event.
+
+It is then followed by additional properties specific to the event in question:
+
+#### Resume Event
+
+When playback first begins, or when playback starts again after any form of
+interruption, a resume event should be created.
+
+* `speed` (optional, number) is the speed at which playback is occurring, e.g.
+  if a client allow the user to listen to a podcast at twice the speed (taking
+  half the time to complete playback) the value should be `2.0`. If playback is
+  slowed to half speed, the value should be `0.5`. Defaults to `1.0`.
+* `loudness` (optional, boolean) is used to signal if some form of loudness
+  manipulation in the client is enabled. Defaults to `false`.
+* `gap_removal` (optional, string) is used to signal if some form of silence
+  removal is being used during playback. Defaults to `false` if not supplied.
+
+#### Suspend Event
+
+When playback is paused or stopped, either via a user interaction (using
+playback controls) or due to an automated-request (e.g. an incoming phone call).
+
+* `reason` (optional, string) used to describe the type of interruption. Can be
+  either `pause` (e.g. user tapped pause/stop), `skip` (e.g. the user has
+  begun moving the play head using a scrub bar or hit a "skip 30 seconds" type
+  option), `complete` (e.g. the audio has reached the end) or `system` (e.g. the
+  OS interrupted playback for a phone call, or even the application crashed, to
+  be reported when the client is next in a position to do so).
+
+### Response
+
+If the pingback request is successful, the expected response status code is
+`201 Created`.
+
+The return body must be a JSON encoded object with a single property `status`
+which is a single string value containing as much information as the server
+deems useful. This string is only expected to be used for debugging purposes.
+
+If a `listener` property is submitted (see
+[Top-level properties](#top-level-properties)), the response object must contain
+an additional property `listener_token` which can be used in subsequent requests
+to represent the same user. A listener token should be stored against the
+pingback server address URL of. If multiple RSS feeds reference the same URL,
+you must re-use the same token. This allows podcast publishers of multiple
+podcast to track common interest by the same listener to different content they
+produce.
+
+Errors can be reported using one of the following:
+
+* `400 Bad Request` if the entity cannot be created with the information in the
+  request body.
+* `429 Too Many Requests` if the service throttles requests from an aggressive
+  client.
+
+## Extensions
+
+Custom objects in the JSON feed may be used, for example for a proprietary
+extension between a specific client application and a publisher. Names must
+start with an _ character followed by a letter. Names must start with an `_`
+character followed by a letter. Custom objects can appear anywhere in a feed.
+
+Although allowed as part of the specification, wherever possible, the scope of
+where these custom extensions are sent should be narrowed to mutually accepting
+parties wherever possible, to avoid unnecessary chatter.
+
+Receiving endpoints that do not understand a given custom object must ignore it.
+
+## Future Compatibility
+
+A version 1 receiver will be a valid version 2 receiver, and so on. Future
+versions may add things, but won't make older receivers invalid.
+
+## Suggestions for podcast software implementations
+
+Reporting listener behaviour should be a transparent opt-in preference. It
+should be explained to the user that the benefits of a producer receiving this
+information may allow them to improve the podcasts they enjoy over time.
+
+Wherever possible, reporting should be done as close to real time as possible.
+However, bear in mind both the ability for the receiver endpoint to handle the
+incoming traffic as well as the bandwidth and data usage of the device the
+listener is using. It's suggested to implement a short "hold off" period, where
+all events within that timeframe are stored and then sent in a single request.
+
+If a user goes offline, any events generated during that time should be held in
+storage until such a time that the device regains connectivity and then
+re-attempt to notify the server. In instances where a lot of events have
+occurred offline, you may need to make two or more requests in sequence with a
+maximum of 100 events per request.
+
+## Suggestions for receiving endpoint implementations
+
+If a request to the endpoint is not using the `POST` method, the `Content-Type`
+header does not indicate `application/json`, the body is not a valid JSON object
+or any required property is missing, the server must respond with a 400 status
+code.
+
+It is strongly advised to take necessary precautions to rate limit a receiving
+endpoint through appropriate methods that are out of the scope for this
+specification.
+
+## Example
+
+1. Alice publishes a new episode of her podcast to
+   https://alice.example.net/podcast.xml
+2. Bob requests Alice's podcast using his podcast software. The software uses a
+   proprietary podcast directory service which in turns returns the URL
+   https://alice.example.net/podcast.xml for the software to load directly. The
+   document is requested, parsed, and an episode is found.
+3. Bob selects the episode. A `<pingback>` element in the `<item>` element was
+   not found, but a `<pingback>` in the parent `<channel>` element was:
+
+   ```
+   <pingback>https://alice.example.net/pingback</pingback>
+   ```
+
+   In addition, an `<enclosure>` element is found in an `<item>` element:
+
+   ```
+   <enclosure url=”https://alice.example.net/episode-1.mp3"/>`
+   ```
+
+   Audio begins to play back from the enclosure URL. The request to playback
+   logs a new `resume` event in to memory and a ten second timeout is started.
+4. This is the first time Bob has listened to a podcast that supports pingbacks
+   in this software. A prompt is shown to Bob:
+
+   > Alice would like to receive statistics about how you listen to this
+   podcast. This happens automatically in the background as you listen. Would
+   you like to share this information with the author to help them improve their
+   podcast?"
+
+   Bob approves and chooses a further option to remain anonymous which prevents
+   the software from sharing a detailed profile.
+
+   Had he denied the initial request, the stored event would be cleared, the
+   timeout cancelled and further events would not be recorded internally.
+
+   Has he approved detailed demographic data to be shared, he would have been
+   asked to answer a few questions to populate the location and date of birth
+   fields in the `listener` field.
+5. A few seconds in to the podcast, Bob holds the scrub control down and skips
+   past the intro, 45 seconds in to the episode, and continues listening.
+6. The ten second timeout elapses, the podcast software generates a UUID to
+   identify the software and dispatches a notification to the pingback server
+   address with all the stored events:
+
+   ```
+   POST /pingback HTTP/1.1
+   Host: alice.example.net
+   Content-Type: application/json
+
+   {
+     "uuid": "009f3279-998f-4b4c-a25b-ef18f7a797c1",
+     "content": "https://alice.example.net/episode-1.mp3",
+     "events": [
+       {
+         "event": "resume",
+         "date": "2018-01-01T09:00:00Z",
+         "offset": 0
+       },
+       {
+         "event": "suspend",
+         "date": "2018-01-01T09:00:08Z",
+         "offset": 8,
+         "reason": "skip"
+       },
+       {
+         "event": "resume",
+         "date": "2018-01-01T09:00:11Z",
+         "offset": 45
+       }
+     ]
+   }
+   ```
+
+   ```
+   HTTP/1.1 201 Created
+   Content-Type: application/json
+
+   { "status": "ok" }
+   ```
+7. Bob continues to listen all the way through the podcast to the end. When
+   playback has finished, another event is reported using the same UUID:
+
+   ```
+   POST /pingback HTTP/1.1
+   Host: alice.example.net
+   Content-Type: application/json
+
+   {
+     "uuid": "009f3279-998f-4b4c-a25b-ef18f7a797c1",
+     "content": "https://alice.example.net/podcasts/episode-1.mp3",
+     "events": [
+       {
+         "event": "suspend",
+         "date": "2018-01-01T09:29:26Z",
+         "offset": 1800,
+         "reason": "complete"
+       }
+     ]
+   }
+   ```
+
+## Reviewers
+
+The authors thank the following people for their contributions and review, in
+alphabetical order: [James Cridland](https://james.crid.land/).
