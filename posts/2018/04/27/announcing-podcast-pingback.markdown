@@ -12,8 +12,15 @@ listening.
 So, based on a previous
 [exploratory idea](https://medium.com/togglebit/how-we-all-can-help-podcasts-thrive-but-nothings-quite-that-easy-e583bb5ffe79),
 the team at [Aiir](https://www.aiir.com/) have developed
-"[Podcast Pingback](/specification/1)", an intentionally simplistic method
-for reporting listening activity back to a podcast publisher.
+"[Podcast Pingback](/specification/1)", a method for reporting listening
+activity back to a podcast publisher.
+
+The idea is intentionally simple. A podcast client can obtain a URL from inside
+an existing RSS XML feed that can receive simple "pingback" HTTP requests
+detailing key events; when the playback starts and when it pauses or stops.
+Beyond that there's additional optional meta that can be attached, such as if
+playback has been sped up or "enhanced" by the client and (subject to consent)
+some profile information on the listener.
 
 Our work at Aiir is focussed around building innovative, easy to use products,
 to enable broadcasters to manage content whilst growing audience and revenue,
