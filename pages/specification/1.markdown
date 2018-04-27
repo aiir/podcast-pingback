@@ -44,7 +44,7 @@ and implement, in the hope that it will get adopted as widely as possible. It
 is implemented via HTTPS to ensure easy implementation in any environment.
 
 The inclusion and management of identifiable information should always be in the
-listeners control, even post submission.
+listener's control, even post submission.
 
 Subscription status is not tracked as an event in Version 1 due to lack of
 usefulness this metric offers when compared to actual listening activity.
@@ -81,7 +81,7 @@ The address must be an HTTPS endpoint.
 Here's a simple example:
 
 ```
-<rss version=”2.0">
+<rss version="2.0">
   <channel>
     <title>Podcast</title>
     <pingback>https://alice.example.net/pingback</pingback>
@@ -89,14 +89,14 @@ Here's a simple example:
       <title>Episode 2</title>
       <guid>https://alice.example.net/episode-2.mp3</guid>
       <pubDate>Tue, 1 May 2018 12:00:00 BST</pubDate>
-      <enclosure length=”1037273" url=”https://alice.example.net/episode-2.mp3" type=”audio/mpeg”/>
+      <enclosure length="1037273" url="https://alice.example.net/episode-2.mp3" type="audio/mpeg"/>
       <pingback>https://alice.example.net/episode-specific-pingback</pingback>
     </item>
     <item>
       <title>Episode 1</title>
       <guid>https://alice.example.net/podcasts/episode-1.mp3</guid>
       <pubDate>Tue, 24 Apr 2018 12:00:00 BST</pubDate>
-      <enclosure length=”1037273" url=”https://alice.example.net/episode-1.mp3" type=”audio/mpeg”/>
+      <enclosure length="1037273" url="https://alice.example.net/episode-1.mp3" type="audio/mpeg"/>
     </item>
   </channel>
 </rss>
@@ -137,11 +137,11 @@ this specification.
 * `events` (required, array) see the following section.
 * `listener` (optional, object) provides further detail of the listener, subject
   to the client obtaining suitable permission to provide these details.
-  * `date_of_birth` (optional, string) is the listeners date of birth in ISO8601
-    date format, e.g. November 21st 1984 would be 1984-11-21. A listener may
-    choose to omit both the date and month if they prefer, in which case values
-    should be replaced by the X character, e.g. to reveal the year only the
-    value would be '1984-XX-XX'.
+  * `date_of_birth` (optional, string) is the listener's date of birth in
+    ISO8601 date format, e.g. November 21st 1984 would be 1984-11-21. A listener
+    may choose to omit both the date and month if they prefer, in which case
+    values should be replaced by the X character, e.g. to reveal the year only
+    the value would be '1984-XX-XX'.
   * `gender` (optional, string) is the gender that the listener identifies as.
     This is a freeform string to allow the listener to identify as they wish.
   * `location` (optional, object) is the location the listener identifies with
@@ -232,8 +232,8 @@ Errors can be reported using one of the following:
 
 Custom objects in the JSON feed may be used, for example for a proprietary
 extension between a specific client application and a publisher. Names must
-start with an _ character followed by a letter. Names must start with an `_`
-character followed by a letter. Custom objects can appear anywhere in a feed.
+start with an _ character followed by a letter. Custom objects can appear
+anywhere in a feed.
 
 Although allowed as part of the specification, wherever possible, the scope of
 where these custom extensions are sent should be narrowed to mutually accepting
@@ -293,7 +293,7 @@ specification.
    In addition, an `<enclosure>` element is found in an `<item>` element:
 
    ```
-   <enclosure url=”https://alice.example.net/episode-1.mp3"/>`
+   <enclosure url="https://alice.example.net/episode-1.mp3"/>`
    ```
 
    Audio begins to play back from the enclosure URL. The request to playback
