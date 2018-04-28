@@ -381,4 +381,4 @@ specification.
 ## Reviewers
 
 The authors thank the following people for their contributions and review, in
-alphabetical order: [James Cridland](https://james.crid.land/).
+alphabetical order: [James Cridland](https://james.cridland.net/)
