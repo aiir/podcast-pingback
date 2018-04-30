@@ -1,4 +1,4 @@
-# Podcast Pingback Version 1
+# Podcast Pingback Version 1.1
 
 ## Abstract
 
@@ -52,45 +52,51 @@ usefulness this metric offers when compared to actual listening activity.
 ## Discovery
 
 A podcast client discovers the availability of this method for a podcast and the
-location of the server to send notifications to from the podcast RSS XML feed.
+location of the receiving server to send notifications to from the podcast RSS
+XML feed.
 
-A `<pingback>` element is added either to the `<channel>` and/or `<item>`
-elements.
+A `<receiver>` element is added either to the `<channel>` and/or `<item>`
+elements. It is within a Podcast Pingback namespace against the URL to this
+specification document.
+
+```
+<rss xmlns:pingback="https://podping.info/specification/1" version="2.0">
+```
 
 ```
 <channel>
-  <pingback>pingback-server</pingback>
+  <pingback:receiver>pingback-receiving-server</pingback:receiver>
 </channel>
 ```
 
 ```
 <item>
-  <pingback>pingback-server</pingback>
+  <pingback:receiver>pingback-receiving-server</pingback:receiver>
 </item>
 ```
 
-A client must evaluate pingback addresses in the order of item being played
-first, then channel. If an item has a pingback address it must be used
-regardless of a channel pingback address being present. If no item pingback
+A client must evaluate receiver addresses in the order of item being played
+first, then channel. If an item has a receiving address it must be used
+regardless of if a channel receiving address is present. If no item receiving
 address is present, but a channel address is present, the channel one must be
-used. If neither are present, the ability to pingback is not offered for this
-podcast.
+used. If neither are present, it is assumed that the ability to pingback is not
+offered for this podcast.
 
 The address must be an HTTPS endpoint.
 
 Here's a simple example:
 
 ```
-<rss version="2.0">
+<rss xmlns:pingback="https://podping.info/specification/1" version="2.0">
   <channel>
     <title>Podcast</title>
-    <pingback>https://alice.example.net/pingback</pingback>
+    <pingback:receiver>https://alice.example.net/pingback</pingback:receiver>
     <item>
       <title>Episode 2</title>
       <guid>https://alice.example.net/episode-2.mp3</guid>
       <pubDate>Tue, 1 May 2018 12:00:00 BST</pubDate>
       <enclosure length="1037273" url="https://alice.example.net/episode-2.mp3" type="audio/mpeg"/>
-      <pingback>https://alice.example.net/episode-specific-pingback</pingback>
+      <pingback:receiver>https://alice.example.net/episode-specific-pingback</pingback:receiver>
     </item>
     <item>
       <title>Episode 1</title>
@@ -103,13 +109,13 @@ Here's a simple example:
 ```
 
 Events against Episode 2 of this podcast must be delivered to the episode
-specific pingback server address, whereas events for Episode 1 must go to the
-channel's parent pingback server address.
+specific pingback receiving address, whereas events for Episode 1 must go to the
+channel's parent pingback receiving address.
 
 ## Notifying
 
-Events are sent to the relevant pingback server address for the item being
-interacted with (see [Discovery](#discovery)).
+Events are sent to the relevant pingback receiving server address for the item
+being interacted with (see [Discovery](#discovery)).
 
 All submissions are done via an HTTPS POST to the server address, with a
 JSON-encoded body object. The `Content-Type` header must be set to
@@ -291,17 +297,18 @@ specification.
    proprietary podcast directory service which in turns returns the URL
    https://alice.example.net/podcast.xml for the software to load directly. The
    document is requested, parsed, and an episode is found.
-3. Bob selects the episode. A `<pingback>` element in the `<item>` element was
-   not found, but a `<pingback>` in the parent `<channel>` element was:
+3. Bob selects the episode. A `<pingback:receiver>` element in the `<item>`
+   element was not found, but a `<pingback:receiver>` in the parent `<channel>`
+   element was:
 
    ```
-   <pingback>https://alice.example.net/pingback</pingback>
+   <pingback:receiver>https://alice.example.net/pingback</pingback:receiver>
    ```
 
    In addition, an `<enclosure>` element is found in an `<item>` element:
 
    ```
-   <enclosure url="https://alice.example.net/episode-1.mp3"/>`
+   <enclosure url="https://alice.example.net/episode-1.mp3"/>
    ```
 
    Audio begins to play back from the enclosure URL. The request to playback
@@ -326,8 +333,9 @@ specification.
 5. A few seconds in to the podcast, Bob holds the scrub control down and skips
    past the intro, 45 seconds in to the episode, and continues listening.
 6. The ten second timeout elapses, the podcast software generates a UUID to
-   identify the software and dispatches a notification to the pingback server
-   address with all the stored events:
+   identify the software and stores it in a persistent store against the
+   pingback receiver URL. The software than dispatches a notification to the
+   receiver with the UUID, content URL and stored events:
 
    ```
    POST /pingback HTTP/1.1
@@ -386,7 +394,12 @@ specification.
    }
    ```
 
+## Changelog
+
+* **v1.1** Adds namespace to RSS XML element.
+
 ## Reviewers
 
 The authors thank the following people for their contributions and review, in
-alphabetical order: [James Cridland](https://james.cridland.net/)
+alphabetical order: [James Cridland](https://james.cridland.net/),
+[Dave Winer](http://scripting.com/).
