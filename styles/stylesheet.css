@@ -35,7 +35,7 @@ header, section, footer { padding: 16px;}
 .inline { list-style: none; margin: 0; padding: 0; }
 .inline > li { display: inline; margin: 0 16px 0 0; }
 
-pre { overflow: scroll; }
+pre { overflow: scroll; background-color: #edeff1; padding: 16px; }
 
 footer { border-top: 1px solid #d1d2d4; color: #808385; padding-top: 48px; }
 
