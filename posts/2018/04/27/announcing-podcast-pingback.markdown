@@ -66,5 +66,5 @@ complete view of the consumption of our content.
 We're keen to receive feedback and engage the community in the future
 development of this spec. Please feel free to look at and fork our GitHub
 repository for the site and submit pull requests, or
-[get in touch](mailto:andy@aiir.com?subject=Podcast%20Pingback) to discuss the
-specification further.
+[get in touch](mailto:feedback@podping.info) to discuss the specification
+further.
