@@ -26,7 +26,7 @@ impact on the current business models and obtainable CPM. Essentially the theory
 that a move towards increased accuracy brings with it diminished returns. We're
 keen to not wade in to the ethics of this particular argument, but simply note
 that without publisher and developer support it's hard for us as a project to
-move forward, and I don't believe Podcast Pingback is alone in this difficulty.
+move forward, and we don't believe Podcast Pingback is alone in this difficulty.
 
 On the second point, the major players are all actively seeking increased share
 for their platforms and, with it, seeking programming exclusivity and agreements
